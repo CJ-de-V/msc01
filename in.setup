@@ -1,0 +1,145 @@
+###
+#Sets up LAMMPS environment for python script to iterate over
+###
+
+###
+#Box and units
+###
+units lj          #use dimensionless LJ units
+atom_style angle  #atoms with bonds and Angles
+boundary m m m    #periodic (we do not want our sphere to be messed around with)
+
+###
+# Pair interactions require lists of neighbours to be calculated
+#TODO: Optimize these settings
+###
+neighbor 1.9 bin
+neigh_modify every 1 delay 1 check yes
+
+###
+# READ configuration data file
+###
+read_data config.straight
+
+###
+# Dump configurations of relaxation
+###
+dump dum1 all custom 10000 dump.relax id type x y z
+dump_modify dum1  sort id
+# every 1000 time steps, each atom's id, type, x,y,z coords and x,y,z are output.
+
+###
+# Set up interactions - start with 'soft' potentials
+###
+
+###
+## angle potential: Using K=16 to prevent overlaps when we switch to the hard potentials
+###
+angle_style  cosine
+angle_coeff   1  16.0
+
+## Between bonded atoms
+bond_style   harmonic
+# For style harmonic, specify:
+#   * bond type
+#   * K (energy/distance^2)
+#   * R0 (distance)
+bond_coeff   1   90.0   1.1
+
+## Between non-bonded atoms
+pair_style     soft 1.12246152962189
+#  pair_coeff for soft, specify 3:
+#    * atom type interacting with
+#    * atom type
+#    * energy - 0 to allow overlapping pairs
+#    * cutoff
+pair_coeff 1 1  1.0 1.12246152962189
+
+###
+# Set up fixes and velocities
+###
+variable seed equal 315987     # a seed for the thermostat
+
+velocity all zero linear   #0 velocity initially
+
+#TODO: IS THIS AN APPROPRIATE INTEGRATOR?
+fix 1 all nve                             # NVE integrator
+fix 2 all langevin   1.0 1.0 1.0 ${seed}  # langevin thermostat
+
+
+##### Output thermodynamic info  (temperature, energy, pressure, etc.) #####
+thermo 10000
+thermo_style   custom   step  temp  epair  emol pe ke etotal  press  vol
+############################################################################
+
+##### Output thermodynamic info to file  ###################################
+variable t equal step
+variable mytemp equal temp
+variable myepair equal epair
+#fix mythermofile all print 10000 "$t ${mytemp} ${myepair}" file thermo_output.dat screen no
+#moved the above to the for loop, neglected to move the rest... since well
+#then i'd have to botehr with redefining variables
+############################################################################
+
+############################################################################
+#### Set up a compute for R_g
+compute myRG2compute all gyration
+#### and write it to a file
+variable RG2 equal c_myRG2compute
+#fix myRG2file all print 10000 "$t ${RG2}" file radius_of_gyration_squared.dat screen no
+#moved the above to the for loop in tha python script like the thermo too!
+############################################################################
+
+###
+#Incremenet COMM cutoff since they get quite pesky about it and it leads to
+#issues like atoms not communicating properly when stretched
+###
+comm_modify cutoff 3.55
+
+###
+# set timestep of integrator
+###
+timestep 0.01
+
+###
+# run integration for a number of steps to equilibrate with soft potnentials
+###
+
+run 10000
+
+###
+# Now switch to LJ potential and FENE bonds
+###
+
+## Between bonded atoms
+bond_style   fene
+special_bonds fene #<=== I M P O R T A N T prevents LJ from being counted twice
+# For style FENE, specify:
+#   * bond type
+#   * K (energy/distance^2)
+#   * R0 (distance)
+#   * epsilon
+#   * sigma
+bond_coeff   1    50.0   1.6   1.0   1.0
+
+## Between non-bonded atoms
+pair_style      lj/cut 1.12246152962189
+pair_modify shift yes        # option to ensure energy is calculated corectly
+#  pair_coeff for LJ, specify 4:
+#    * atom type interacting with
+#    * atom type
+#    * energy - again set to 0 to allow overlaps
+#    * mean diameter of the two atom types
+#    * cutoff
+pair_coeff      1 1 1.0 1.0 1.12246152962189
+
+#brief stint under new potentials to allow it to relax under them
+run 10000
+
+#disables relaxation dump
+undump dum1
+
+###
+# now do a longer run with the FENE LJ potentials, relaxed in every possible way, expect to catch a lot of oscillation
+# this also makes the dump we'll actually use for data analysis
+###
