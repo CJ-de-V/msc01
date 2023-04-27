@@ -73,30 +73,6 @@ with open(sys.argv[1]) as datafile:
 print(numavg)
 correlationfunctions=correlationfunctions/numavg
 
-#plt.title("Correlation Function vs bond separation")
-#plt.xlabel("number of separating bonds")
-#plt.ylabel("correlation function")
-#plt.ylim([-1, 1])
-#plt.xlim([0, 100])
-
-#start fitting procedure
-# p=np.polyfit(np.arange(len(correlationfunctions)),np.log(correlationfunctions),1)
-# a = np.exp(p[1])
-# b = p[0]
-# print(a,"and",b)
-# x_fitted = np.arange(len(correlationfunctions))
-# y_fitted = a * np.exp(b * x_fitted)
-#
-#ax = plt.axes()
-# ax.scatter(x_fitted, correlationfunctions, label='Raw data')
-# ax.plot(x_fitted, y_fitted, 'k', label='Fitted curve')
-# ax.set_title('Using polyfit() to fit an exponential function')
-# ax.set_ylabel('Pair Correlation Function x#dumps')
-# ax.set_xlabel('Number of separating bonds/monomers? check +-1')
-#plt.axes.legend()
-#End of first malarkey filled fitting procedure
-
-#start of second curve fitting procedure
 x = np.arange(len(correlationfunctions)) #x range because for SOME REASON we need that
 y=correlationfunctions
 
