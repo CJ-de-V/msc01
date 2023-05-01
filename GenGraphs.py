@@ -1,9 +1,26 @@
-from numpy.fft import fft, ifft
 import numpy as np
 from matplotlib import pyplot as plt
-from scipy.optimize import curve_fit
 import pandas as pd
 import sys
+
+
+# Pandas dataframe, x dependent & y independent variable, variable on legend and number of figure for plotting
+# figure numbers have to be distinct
+def loglogplot(datfram, dependent, independent, legend, number):
+    plt.figure(number)
+    legset = datfram[legend].unique()
+
+    for leg in legset:
+        ndata = df.loc[df[legend] == leg]
+        x = np.log(np.array(ndata[dependent].tolist()))
+        y = np.log(np.array(ndata[independent].tolist()))
+        plt.plot(x, y, 'o-')
+
+    plt.title("Log-Log plot of " + dependent + " vs " + independent + " for various " + legend)
+    plt.xlabel("Log(" + dependent + ")")
+    plt.ylabel("Log(" + independent + ")")
+    plt.legend(legset, title=legend)
+
 
 with open(sys.argv[1]) as datafile:
     fields = datafile.readline().split(', ')
@@ -16,45 +33,16 @@ with open(sys.argv[1]) as datafile:
 
         line = datafile.readline()
 
-# print(df)
-# we now have all our data in a pandas database. Now we can begin to plot their entries one by one
-
-
-# collection of independent variables
-kvals = df['k'].unique()
-Nvals = df['N'].unique()
-
-
 # plot ln Lp vs ln k
-plt.figure(1)
-for n in Nvals:
-    # all the data for N = n
-    ndata = df.loc[df['N'] == n]
-    # print(ndata)
-    x = np.log(np.array(ndata['k'].tolist()))
-    y = np.log(np.array(ndata['lp'].tolist()))
-    plt.plot(x, y, 'o-')
 
-plt.title("Log-Log plot of k vs lp for various N")
-plt.xlabel("Log(k)")
-plt.ylabel("Log(lp)")
-plt.legend(Nvals,title='Number of monomers')
+loglogplot(df, 'k', 'lp', 'N', 1)
 
-plt.figure(2)
+# plot ln N vs ln Rg^2
 
-for k in kvals:
-    # all the data for N = n
-    ndata = df.loc[df['k'] == k]
-    # print(ndata)
-    x = np.log(np.array(ndata['N'].tolist()))
-    y = np.log(np.array(ndata['R_g'].tolist()))
-    plt.plot(x, y, 'o-')
+loglogplot(df, 'N', 'R_g', 'k', 2)
 
-plt.title("Log-Log plot of N vs Rg^2 for various N")
-plt.xlabel("Log(N)")
-plt.ylabel("Log(Rg^2)")
-plt.legend(kvals,title='Bending Cost')
+# plot ln R_g vs ln lp
+
+loglogplot(df, 'R_g', 'lp', 'k', 3)
 
 plt.show()
-
-
