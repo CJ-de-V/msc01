@@ -80,8 +80,6 @@ avgbondlength = avgbondlength / (Nb * numavg)
 y = correlationfunctions / numavg
 x = np.arange(len(y)) * avgbondlength
 # x range in LJ units
-
-#weights = np.arange(Nc, 0, -1)
 weights = np.reciprocal(np.arange(Nc+0.0, 0.0, -1.0))
 
 # actual terminal dat
