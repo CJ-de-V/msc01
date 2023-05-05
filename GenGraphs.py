@@ -45,4 +45,8 @@ loglogplot(df, 'N', 'R_g', 'k', 2)
 
 loglogplot(df, 'R_g', 'lp', 'k', 3)
 
+# plot ln R_g vs ln lp
+
+loglogplot(df, 'R_g', 'lp', 'N', 5)
+
 plt.show()
