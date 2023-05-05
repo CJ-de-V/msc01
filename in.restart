@@ -4,6 +4,7 @@
 ###
 # Set up fixes - as these are not stored in the restart files
 ###
+variable seed equal 315987     # a seed for the thermostat
 fix 1 all nve                             # NVE integrator
 fix 2 all langevin   1.0 1.0 1.0 ${seed}  # langevin thermostat
 
@@ -18,4 +19,9 @@ variable myepair equal epair
 compute myRG2compute all gyration
 #### and write it to a file
 variable RG2 equal c_myRG2compute
+############################################################################
+
+##### Output thermodynamic info  (temperature, energy, pressure, etc.) #####
+thermo 10000
+thermo_style   custom   step  temp  epair  emol pe ke etotal  press  vol
 ############################################################################

@@ -20,15 +20,15 @@ from lammps import lammps
 import os
 import pandas as pd
 
-#basedirectory
+# basedirectory
 basedir = os.getcwd()
 
 me = 0
 me = MPI.COMM_WORLD.Get_rank()
 nprocs = MPI.COMM_WORLD.Get_size()
 
-N = [32]
-K = [16]
+N = [32, 64, 128, 256, 512]
+K = [0.25, 0.5, 1, 2, 4, 8, 16, 32, 64, 128]
 Nruns = 500000
 
 # List of N values along with which K values need to be run for a longer time.
@@ -45,16 +45,20 @@ infile = 'in.restart'
 
 for n in N:
     for k in K:
-
-        os.chdir(basedir) # back to file dir
-        # change into dir where we wish to read/write
-        os.chdir('/N'+str(n))
+        os.chdir(basedir)  # back to file dir
+        # change into dir where we wish to read/write... also using this since CD with multithreads to relative paths
+        # is a bit wonky but this is functional
+        os.chdir(basedir + '/N' + str(n))
         lmp = lammps()
+        lmp.command('log log.N' + str(n) + 'k' + str(k))
+        lmp.command('print \">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>N: ' + str(
+            n) + ' K: ' + str(k) + '\"')
+
         # read in which restart file we're working with
 
-        lmp.command('read_restart restart._N' + n + '_k' + k + '.dat')
+        lmp.command('read_restart restart._N' + str(n) + '_k' + str(k) + '.dat')
 
-        lines = open(infile, 'r').readlines()
+        lines = open(basedir + '/' + infile, 'r').readlines()
         for line in lines:
             lmp.command(line)
 
@@ -66,11 +70,12 @@ for n in N:
                         n) + "_k" + str(k) + ".dat screen no",
                     "dump dum2 all custom 10000 dump_N" + str(n) + "_k" + str(k) + ".dynamics id type x y z",
                     "dump_modify dum2  sort id"
+                    # ,"fix recenterinator all recenter 0.0 0.0 0.0"
                     ]
         lmp.commands_list(fixsetup)
 
         # run and collect data under these new fixes
-        lmp.command("run "+str(Nruns))
+        lmp.command("run " + str(Nruns))
 
         # End of SimUlation Events
         cleansetup = ["write_restart 	restart._N" + str(n) + "_k" + str(k) + ".dat"]

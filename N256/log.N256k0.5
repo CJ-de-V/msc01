@@ -1,0 +1,97 @@
+print ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>N: 256 K: 0.5"
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>N: 256 K: 0.5
+read_restart restart._N256_k0.5.dat
+Reading restart file ...
+  restart file = 23 Jun 2022, LAMMPS = 23 Jun 2022
+  restoring atom style angle from restart
+  orthogonal box = (-128 -128 -128) to (128 128 128)
+  1 by 2 by 2 MPI processor grid
+  restoring pair style lj/cut from restart
+  restoring bond style fene from restart
+  restoring angle style cosine from restart
+  256 atoms
+  255 bonds
+  254 angles
+Finding 1-2 1-3 1-4 neighbors ...
+  special bond factors lj:    0        1        1       
+  special bond factors coul:  0        1        1       
+     2 = max # of 1-2 neighbors
+     6 = max # of special neighbors
+  special bonds CPU = 0.000 seconds
+  read_restart CPU = 0.002 seconds
+# sets up computes needed for continuing a run from a restart file
+
+# dumps and fixes, dumps are already handled in the python file
+
+
+
+###
+
+# Set up fixes - as these are not stored in the restart files
+
+###
+
+variable seed equal 315987     # a seed for the thermostat
+
+fix 1 all nve                             # NVE integrator
+
+fix 2 all langevin   1.0 1.0 1.0 ${seed}  # langevin thermostat
+
+fix 2 all langevin   1.0 1.0 1.0 315987  
+
+
+##### Calculate thermodynamics to write ###################################
+
+variable t equal step
+
+variable mytemp equal temp
+
+variable myepair equal epair
+
+############################################################################
+
+
+
+############################################################################
+
+#### Set up a compute for R_g
+
+compute myRG2compute all gyration
+
+#### and write it to a file
+
+variable RG2 equal c_myRG2compute
+
+############################################################################
+
+
+
+##### Output thermodynamic info  (temperature, energy, pressure, etc.) #####
+
+thermo 10000
+
+thermo_style   custom   step  temp  epair  emol pe ke etotal  press  vol
+
+############################################################################
+
+fix mythermofile all print 10000 "$t ${mytemp} ${myepair}" file thermo_output_N256_k0.5.dat screen no
+fix myRG2file all print 10000 "$t ${RG2}" file radius_of_gyration_squared_N256_k0.5.dat screen no
+dump dum2 all custom 10000 dump_N256_k0.5.dynamics id type x y z
+dump_modify dum2  sort id
+run 500000
+Generated 0 of 0 mixed pair_coeff terms from geometric mixing rule
+Neighbor list info ...
+  update every 1 steps, delay 10 steps, check yes
+  max neighbors/atom: 2000, page size: 100000
+  master list distance cutoff = 1.4224615
+  ghost atom cutoff = 3.55
+  binsize = 0.71123076, bins = 360 360 360
+  1 neighbor lists, perpetual/occasional/extra = 1 0 0
+  (1) pair lj/cut, perpetual
+      attributes: half, newton on
+      pair build: half/bin/newton
+      stencil: half/bin/3d
+      bin: standard
+Per MPI rank memory allocation (min/avg/max) = 58.5 | 58.73 | 58.9 Mbytes
+   Step          Temp          E_pair         E_mol          PotEng         KinEng         TotEng         Press          Volume    
+    540000   0.98961356     0.020633165    31.416231      31.436864      1.4786218      32.915486     -1.4775992e-05  16777216     
