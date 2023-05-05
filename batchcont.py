@@ -10,53 +10,53 @@
 
 from __future__ import print_function
 import sys
+
+import numpy as np
+import pandas
 import pandas as pd
 import ctypes
 from mpi4py import MPI
 from lammps import lammps
+import os
+import pandas as pd
 
-# parse command line
-
-argv = sys.argv
-if len(argv) != 2:
-    print("Syntax: simple.py in.lammps")
-    sys.exit()
-
-infile = sys.argv[1]
+#basedirectory
+basedir = os.getcwd()
 
 me = 0
 me = MPI.COMM_WORLD.Get_rank()
 nprocs = MPI.COMM_WORLD.Get_size()
 
-# N = [32, 64, 128, 256, 512]
-# K = [0.25, 0.5, 1, 2, 4, 8, 16, 32, 64, 128]
+N = [32]
+K = [16]
+Nruns = 500000
 
 # List of N values along with which K values need to be run for a longer time.
-runmelonger = [[32, [32, 64, 128]],
-               [64, [16, 32, 64, 128]],
-               [128, [16]],
-               [256, [0.25, 0.5, 16]],
-               [512, [0.25, 0.5, 1, 16]]]
+# runmelonger = [[32, [0.25,0.5,1,2,4,8,16,32, 64, 128]],
+#                [64, [16, 32, 64, 128]],
+#                [128, [16]],
+#                [256, [0.25, 0.5, 16]],
+#                [512, [0.25, 0.5, 1, 16]]]
 
-# run infile one line at a time
 
-#adapt from continuedrestart?
+# adapt from continuedrestart?
+# Sets up the computes and variables we require for our dump(s)
+infile = 'in.restart'
 
-for nray in runmelonger:
-    for k in nray[1]:
-        n = nray[0]
+for n in N:
+    for k in K:
 
-        lmp=lammps()
-        #read in which restart file we're working with
-        lmp.command('read_restart restart._N'+n+'_k'+k+'.dat')
+        os.chdir(basedir) # back to file dir
+        # change into dir where we wish to read/write
+        os.chdir('/N'+str(n))
+        lmp = lammps()
+        # read in which restart file we're working with
+
+        lmp.command('read_restart restart._N' + n + '_k' + k + '.dat')
 
         lines = open(infile, 'r').readlines()
-        for line in lines: lmp.command(line)
-        
-        # setup commands that run in in.continuedrestart here, computes and variables mostly
-        # dumps are already below since they were named in the python script to begin with
-
-        initialize
+        for line in lines:
+            lmp.command(line)
 
         # setup fixes that write to file, Thermo, R_g, and dump file, read in restart file
         fixsetup = ["fix mythermofile all print 10000 \"$t ${mytemp} ${myepair}\" file thermo_output_N" + str(
@@ -70,20 +70,16 @@ for nray in runmelonger:
         lmp.commands_list(fixsetup)
 
         # run and collect data under these new fixes
-        lmp.command("run 250000")
+        lmp.command("run "+str(Nruns))
 
-        # remove fixes
-        cleansetup = ["write_restart 	restart._N" + str(monomercount) + "_k" + str(k) + ".dat",
-                      "unfix mythermofile",
-                      "unfix myRG2file",
-                      "undump dum2"]
+        # End of SimUlation Events
+        cleansetup = ["write_restart 	restart._N" + str(n) + "_k" + str(k) + ".dat"]
         lmp.commands_list(cleansetup)
-
-    # write restart file, possibly reset timestep? seems useless to do so ngl
-
+        lmp.close()
 # uncomment if running in parallel via mpi4py
 print("Proc %d out of %d procs has" % (me, nprocs), lmp)
 
 MPI.COMM_WORLD.Barrier()
-# Definitely worth looking at the for throwing these in the for loops, might be that only one core is ending the dumps before the others get to dumping
+# Definitely worth looking at the for throwing these in the for loops, might be that only one core is ending the
+# dumps before the others get to dumping
 MPI.Finalize()

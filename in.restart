@@ -1,0 +1,21 @@
+# sets up computes needed for continuing a run from a restart file
+# dumps and fixes, dumps are already handled in the python file
+
+###
+# Set up fixes - as these are not stored in the restart files
+###
+fix 1 all nve                             # NVE integrator
+fix 2 all langevin   1.0 1.0 1.0 ${seed}  # langevin thermostat
+
+##### Calculate thermodynamics to write ###################################
+variable t equal step
+variable mytemp equal temp
+variable myepair equal epair
+############################################################################
+
+############################################################################
+#### Set up a compute for R_g
+compute myRG2compute all gyration
+#### and write it to a file
+variable RG2 equal c_myRG2compute
+############################################################################
