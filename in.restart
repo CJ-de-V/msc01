@@ -25,3 +25,9 @@ variable RG2 equal c_myRG2compute
 thermo 10000
 thermo_style   custom   step  temp  epair  emol pe ke etotal  press  vol
 ############################################################################
+
+###
+# modify neighborlist behaviour since this too is not recorded
+###
+neighbor 1.9 bin
+neigh_modify every 1 delay 1 check yes
