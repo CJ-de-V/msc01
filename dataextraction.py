@@ -37,7 +37,7 @@ bondvectors = 0
 
 Nmonomers = [32, 64, 128, 256, 512]
 kvalues = [0.25, 0.5, 1, 2, 4, 8, 16, 32, 64, 128]
-datfile.write("N, k, lp, covar/lp, R_g, Var/R_g, lb\n")
+datfile.write("N, k, lp, lp_sd, R_g, R_g_sd, lb\n")
 for nmonom in Nmonomers:
     print('starting with N=' + str(nmonom))
     for kval in kvalues:
@@ -84,7 +84,7 @@ for nmonom in Nmonomers:
             weights = np.reciprocal(np.arange(Nc + 0.0, 0.0, -1.0))
             param, param_cov = curve_fit(test, x, y, maxfev=1000, sigma=weights)
             lp = param[0]
-            # R_g^2's hootenanny
+            # R_gs hootenanny
 
             with open('N' + str(nmonom) + '/radius_of_gyration_squared_N' + str(nmonom) + '_k' + str(
                     kval) + '.dat') as datafile:
@@ -100,9 +100,9 @@ for nmonom in Nmonomers:
             datfile.write(str(kval) + ', ')  # k
             datfile.write(str(lp) + ', ')  # lp
             # below is from switching to LJ units from bondvector units
-            datfile.write(str(param_cov[0][0]) + ', ')  # relative variance of lp
+            datfile.write(str(np.sqrt(param_cov[0][0])) + ', ')  # SD of lp
 
             datfile.write(str(Rg) + ', ')  # Rg
-            datfile.write(str(RgVar / Rg) + ', ')  # relative variance of Rg
+            datfile.write(str(np.sqrt(RgVar)) + ', ')  # SD of Rg
             datfile.write(str(avgbondlength) + '\n')  # lb
 # datfile.close()

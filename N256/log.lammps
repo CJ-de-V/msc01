@@ -1,4 +1,4 @@
 LAMMPS (23 Jun 2022 - Update 3)
 WARNING: Using I/O redirection is unreliable with parallel runs. Better use -in switch to read input file. (src/lammps.cpp:530)
   using 1 OpenMP thread(s) per MPI task
-log log.N256k0.5
+log log.N256k128

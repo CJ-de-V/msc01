@@ -27,9 +27,9 @@ me = 0
 me = MPI.COMM_WORLD.Get_rank()
 nprocs = MPI.COMM_WORLD.Get_size()
 
-N = [256, 512]
-K = [0.25, 0.5]
-Nruns = 500000
+N = [32, 64]
+K = [0.25, 0.5, 1, 2, 4, 8, 16, 32, 64, 128]
+Nruns = 1500000
 
 # List of N values along with which K values need to be run for a longer time.
 # runmelonger = [[32, [0.25,0.5,1,2,4,8,16,32, 64, 128]],
